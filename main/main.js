@@ -3,28 +3,35 @@ const path = require('path');
 const fs = require('fs');
 const mm = require('music-metadata');
 const chokidar = require('chokidar');
-const { pathToFileURL } = require('url');
+const { pathToFileURL, fileURLToPath } = require('url');
 
+const isDev = !app.isPackaged;
 let mainWindow;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 560,
-        transparent: true,
-        frame: false,  
+        transparent: false,
+        frame: true,
         hasShadow: false,
         resizable: true,
         webPreferences: {
-            preload: path.join(__dirname, '../preload/preload.js')
+            preload: path.join(__dirname, '../preload/preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
         }
     });
+    if (isDev) {
+        mainWindow.loadURL('http://localhost:5173')
+        mainWindow.webContents.openDevTools()
+    } else {
+        mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    }
     mainWindow.setResizable(true);
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-    mainWindow.webContents.openDevTools();
 }
 
-const MUSIC_FOLDER = path.join(__dirname, '../assets/music');
+const MUSIC_FOLDER = path.join(require("os").homedir(), "Documents", "music_folder");
 
 if (!fs.existsSync(MUSIC_FOLDER)) { // check if folder MUSIC_FOLDER exist, if not then...
     fs.mkdirSync(MUSIC_FOLDER, { recursive: true }); // create folder (MUSIC_FOLDER);
@@ -63,6 +70,13 @@ async function safeParseFile(filePath, retries = 5, delay = 300) {
     }
     throw new Error(`Failed to pars file after ${retries} retries: ${filePath}`);
 }
+
+
+ipcMain.handle('load-audio', async (_, fileUrl) => {
+    const filePath = fileURLToPath(fileUrl); // convert back to C:\...
+    const data = await fs.promises.readFile(filePath);
+    return data.toString('base64');
+});
 
 /* ipcMain  */
 

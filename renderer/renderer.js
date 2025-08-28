@@ -1,3 +1,5 @@
+import './style.css';
+
 let currentSongs = [];
 let currentIndex = -1;
 let allSongs = [];
@@ -24,6 +26,7 @@ function formatDuration(seconds) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+//document.getElementById('playBtn').addEventListener('click', );
 /* Hide List */
 const toggleButton = document.getElementById('toggleSongList');
 const songList = document.getElementById('songList');
@@ -66,22 +69,22 @@ function updatePlayIcon(isPlaying) {
         : `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>`
 }
 
-function playSong(index) {
-    if (index < 0 || index >= currentSongs.length) return;
-    currentIndex = index;
-    const song = currentSongs[index];
-    audioPlayer.src = song.filePath;
-    audioPlayer.play();
-    updatePlayIcon(true);
-    localStorage.setItem('lastSongIndex', index);
-    localStorage.setItem('lastSongTime', 0);
-    try {
-        audioPlayer.play();
-        nowPlayingDisplay.textContent = `Now Playing: "${song.title} by ${song.artist}`;
-    } catch (err) {
-        console.warn("Playback failed:", err);
-    }
-}
+// function playSong(index) {
+//     if (index < 0 || index >= currentSongs.length) return;
+//     currentIndex = index;
+//     const song = currentSongs[index];
+//     audioPlayer.src = song.filePath;
+//     audioPlayer.play();
+//     updatePlayIcon(true);
+//     localStorage.setItem('lastSongIndex', index);
+//     localStorage.setItem('lastSongTime', 0);
+//     try {
+//         audioPlayer.play();
+//         nowPlayingDisplay.textContent = `Now Playing: "${song.title} by ${song.artist}`;
+//     } catch (err) {
+//         console.warn("Playback failed:", err);
+//     }
+// }
 
 function resizeWindowToContent() {
     const radio = document.querySelector(".radio");
@@ -158,6 +161,20 @@ async function loadAllSongs() {
         console.error('Error loading songs:', error);
         showStatus('Error loading songs', 'error');
     }
+}
+
+async function playSong(index) {
+  const selectedSongPath = currentSongs[index].filePath;
+  console.log('selectedSongPath', selectedSongPath);
+  const base64 = await window.electronAPI.loadAudio(selectedSongPath);
+  const blob = new Blob(
+    [Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
+    { type: 'audio/mpeg' }
+  );
+  const url = URL.createObjectURL(blob);
+  
+  const audio = new Audio(url);
+  audio.play();
 }
 
 function populateAuthorDropdown(songs) {

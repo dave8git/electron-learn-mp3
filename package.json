@@ -4,16 +4,19 @@
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electronmon .",
+    "dev": "concurrently \"vite\" \"electronmon .\"",
+    "build": "vite build && electron-builder",
     "clean": "rimraf dist",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "electron": "^27.0.0",
     "electron-builder": "^26.0.12",
     "electronmon": "^2.0.3",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vite": "^7.1.3"
   },
   "dependencies": {
     "chokidar": "^4.0.3",

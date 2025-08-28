@@ -6,4 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     loadAllMp3Files: () => ipcRenderer.invoke('load-all-mp3-files'),
     onSongsUpdated: (callback) => ipcRenderer.on('songs-updated', (event, fileName) => callback(fileName)),
     resizeWindow: (width, height) => ipcRenderer.send('resize-window', width, height),
+    loadAudio: (song) => {
+        console.log('song', song);
+        return ipcRenderer.invoke('load-audio', song)
+    }
 });
