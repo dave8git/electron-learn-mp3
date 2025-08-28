@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
+    <title>Music Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="normalize.css">
+</head>
+<body>
+     <div class="radio">
+        <div class="title-bar">
+            <span class="title">basicMP3Player</span>
+            <div class="window-controls">
+                <button id="min-btn">—</button>
+                <button id="max-btn">□</button>
+                <button id="close-btn">✕</button>
+            </div>
+        </div>
+        <div class="display">
+            🎵 Now Playing: "My Song"
+        </div>
+        <div class="buttons">
+            <button id="uploadFiles">Upload MP3 Files</button>
+            <button id="loadSongs">Load All Songs</button>
+            <button id="toggleSongList">Hide Songs</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <ul id="songList" class="songList"></ul>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="time-display">
+            <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+        </div>
+        <div class="controls">
+            <div class="btn">
+                <!-- Prev -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19V5l8.5 7L6 19zm9.5-7V5l8.5 7-8.5 7z" transform="scale(-1,1) translate(-24,0)" />
+                </svg>
+            </div>
+            <div class="btn" id="playBtn">
+                <!-- Play -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            </div>
+            <div class="btn">
+                <!-- Next -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19V5l8.5 7L6 19zm9.5-7V5l8.5 7-8.5 7z" />
+                </svg>
+            </div>
+            <div id="authorDropdown">
+                <select id="authorSelect">
+                    <option value="all">All Authors</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
+    <script src="renderer.js"></script>
+</body>
+</html>
