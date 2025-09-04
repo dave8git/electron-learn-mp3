@@ -41,10 +41,12 @@ toggleButton.addEventListener('click', () => {
     if (radio) {
         const width = radio.offsetWidth;
         const height = radio.offsetHeight;
-        window.electronAPI.resizeWindow(width, height); // ✅ now two numbers
+        //window.electronAPI.resizeWindow(width, height); // ✅ now two numbers
     }
 
-    resizeWindowToContent()
+    setTimeout(() => {
+        resizeWindowToContent();
+    }, 50);
 });
 
 /* -------- */
@@ -89,6 +91,7 @@ function updatePlayIcon(isPlaying) {
 function resizeWindowToContent() {
     const radio = document.querySelector(".radio");
     if (radio) {
+        radio.offsetHeight;
         const width = radio.offsetWidth;
         const height = radio.offsetHeight;
         window.electronAPI.resizeWindow(width, height);
@@ -199,6 +202,31 @@ async function deleteSong(song) {
         }
     }
 }
+
+/* Author search */
+
+const authorSelect = document.getElementById("authorSelect");
+
+authorSelect.addEventListener("change", (e) => {
+    currentFilter = e.target.value;
+    currentSongs = getFilteredSongs();
+    displaySongs(currentSongs);
+});
+
+/* ------------- */
+
+document.getElementById("min-btn").addEventListener("click", () => {
+  window.electronAPI.minimize();
+});
+
+document.getElementById("max-btn").addEventListener("click", () => {
+  window.electronAPI.maximize();
+});
+
+document.getElementById("close-btn").addEventListener("click", () => {
+  window.electronAPI.close();
+});
+
 
 window.electronAPI.onSongsUpdated((fileName) => {
     loadAllSongs();

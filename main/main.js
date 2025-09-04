@@ -12,8 +12,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 560,
-        transparent: false,
-        frame: true,
+        transparent: true,
+        frame: false,
         hasShadow: false,
         resizable: true,
         webPreferences: {
@@ -150,10 +150,24 @@ ipcMain.handle('load-all-mp3-files', async () => {
     }
 });
 
-ipcMain.on('resize-window', (event, width, height) => {
-    if (!mainWindow) return;
-    mainWindow.setContentSize(width, height);
-})
+ipcMain.on("window-control", (_, action) => {
+  if (!mainWindow) return;
+  switch (action) {
+    case "minimize":
+      mainWindow.minimize();
+      break;
+    case "maximize":
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
+      break;
+    case "close":
+      mainWindow.close();
+      break;
+  }
+});
 
 app.whenReady().then(() => {
     createWindow();

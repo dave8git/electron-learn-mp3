@@ -9,7 +9,7 @@ html, body {
 }
 
 body {
-  background: #202020;
+  background: transparent;
   font-family: 'Press Start 2P', monospace;
   display: flex;
   justify-content: center;
@@ -19,8 +19,8 @@ body {
 
 /* Player container */
 .radio {
-  width: 760px;
-  height: 560px;
+  width: 560px;
+  min-height: 200px;
   background: #222;
   color: white;
   display: flex;
@@ -40,6 +40,17 @@ body {
   border-bottom: 2px solid #111;
   flex: 0 0 auto;
 }
+
+#titlebar {
+  -webkit-app-region: drag;
+  user-select: none; /* optional: prevent text selection */
+}
+
+/* But buttons inside should NOT drag */
+#titlebar button {
+  -webkit-app-region: no-drag;
+}
+
 .title {
   font-weight: bold;
   text-transform: uppercase;
@@ -102,13 +113,35 @@ body {
 /* Song list fills available space */
 #songList,
 .songList {
-  flex: 1 1 auto;          /* expand/shrink with leftover space */
-  overflow-y: auto;        /* scroll when too many songs */
+  overflow-y: overlay;
   padding: 10px;
   margin: 10px 0;
   list-style: none;
   background: #333;
   border-radius: 10px;
+  max-height: 300px;
+}
+
+#songList::-webkit-scrollbar,
+.songList::-webkit-scrollbar {
+  width: 8px;
+}
+
+#songList::-webkit-scrollbar-track,
+.songList::-webkit-scrollbar-track {
+  background: #222;
+  border-radius: 4px;
+}
+
+#songList::-webkit-scrollbar-thumb,
+.songList::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+#songList::-webkit-scrollbar-thumb:hover,
+.songList::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }
 
 #songList.hidden {
