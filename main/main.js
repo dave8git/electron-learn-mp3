@@ -177,6 +177,22 @@ app.whenReady().then(() => {
     });
 });
 
+ipcMain.handle('delete-mp3-file', async (event, fileName) => {
+  try {
+    const filePath = path.join(MUSIC_FOLDER, fileName);
+
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+      console.log(`Deleted: ${fileName}`);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error(`Error deleting ${fileName}:`, err);
+    return false;
+  }
+});
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });

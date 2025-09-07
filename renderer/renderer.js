@@ -56,6 +56,7 @@ document.getElementById('uploadFiles').addEventListener('click', async () => {
         const uploadedFiles = await window.electronAPI.uploadMp3Files(); // electronAPI -- czyli tak jakby z backendu (main.js) api czytamy to co udostępnia (uploadMp3Files udostępnia tablicę piosenek)
         if (uploadedFiles.length > 0) { // w uploadedFiles będzie to co zwróci backend a tam uploadMp3Files()
             showStatus(`Uploaded ${uploadedFiles.length} file(s) successfully!`); // wykorzystanie funkcji showStatus() 
+            await loadAllSongs();
         } else {
             showStatus('No files were uploaded', 'error');
         }
@@ -70,23 +71,6 @@ function updatePlayIcon(isPlaying) {
         ? `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14z M14 5v14h4V5h-4z" transform="scale(-1,1) translate(-24,0)" /></svg>`
         : `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>`
 }
-
-// function playSong(index) {
-//     if (index < 0 || index >= currentSongs.length) return;
-//     currentIndex = index;
-//     const song = currentSongs[index];
-//     audioPlayer.src = song.filePath;
-//     audioPlayer.play();
-//     updatePlayIcon(true);
-//     localStorage.setItem('lastSongIndex', index);
-//     localStorage.setItem('lastSongTime', 0);
-//     try {
-//         audioPlayer.play();
-//         nowPlayingDisplay.textContent = `Now Playing: "${song.title} by ${song.artist}`;
-//     } catch (err) {
-//         console.warn("Playback failed:", err);
-//     }
-// }
 
 function resizeWindowToContent() {
     const radio = document.querySelector(".radio");
@@ -134,16 +118,26 @@ function displaySongs(songs) {
         /* deleteBtn */
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = 'x';
         deleteBtn.onclick = (e) => {
             e.stopPropagation();
             deleteSong(song);
         }
+
+        songInfo.addEventListener('click', () => {
+            if (currentIndex === index && !audioPlayer.paused) {
+                audioPlayer.pause();
+                updatePlayIcon(false);
+            } else {
+                playSong(index);
+            }
+        });
         /*----------*/
         li.appendChild(songInfo).classList.add('songInfo');
         li.appendChild(deleteBtn);
         list.appendChild(li);
     });
+    updateActiveSong();
     resizeWindowToContent();
 }
 
@@ -182,6 +176,7 @@ async function playSong(index) {
     await audioPlayer.play();
     updatePlayIcon(true);
     nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
+    updateActiveSong();
 }
 
 function playNext() {
@@ -241,6 +236,36 @@ function populateAuthorDropdown(songs) {
     });
 }
 
+function updateActiveSong() {
+    const allSongs = document.querySelectorAll('.songList li');
+    allSongs.forEach(li => li.classList.remove('active'));
+    
+    if (currentIndex >= 0 && currentIndex < currentSongs.length) {
+        const activeSongElement = document.querySelector(`.songList li:nth-child(${currentIndex + 1})`);
+        if (activeSongElement) {
+            activeSongElement.classList.add('active');
+        }
+    }
+    setTimeout(() => {
+        scrollToActiveSongSimple();
+    }, 100);
+}
+
+function scrollToActiveSongSimple() {
+    if (currentIndex >= 0 && currentIndex < currentSongs.length) {
+        const activeSongElement = document.querySelector(`.songList li:nth-child(${currentIndex + 1})`);
+        
+        if (activeSongElement) {
+            console.log(`Scrolling to active song at index ${currentIndex}`);
+            activeSongElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
+    }
+}
+
 async function deleteSong(song) {
     if (confirm(`Are you sure you want to delete "${song.title}"?`)) {
         const success = await window.electronAPI.deleteMp3File(song.fileName);
@@ -259,7 +284,7 @@ const authorSelect = document.getElementById("authorSelect");
 
 authorSelect.addEventListener("change", (e) => {
     currentFilter = e.target.value;
-    currentSongs = getFilteredSongs(); b
+    currentSongs = getFilteredSongs(); 
     displaySongs(currentSongs);
 });
 
@@ -270,7 +295,7 @@ document.getElementById("min-btn").addEventListener("click", () => {
 });
 
 document.getElementById("max-btn").addEventListener("click", () => {
-    window.electronAPI.maximize(); b
+    window.electronAPI.maximize();
 });
 
 document.getElementById("close-btn").addEventListener("click", () => {
@@ -289,3 +314,6 @@ window.electronAPI.onSongsUpdated((fileName) => {
     loadAllSongs();
 })
 
+window.addEventListener('DOMContentLoaded', () => {
+  loadAllSongs();
+});
