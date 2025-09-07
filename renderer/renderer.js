@@ -176,8 +176,56 @@ async function playSong(index) {
   );
   const url = URL.createObjectURL(blob);
   
-  const audio = new Audio(url);
-  audio.play();
+  audioPlayer.src = url;
+  await audioPlayer.play();
+  updatePlayIcon(true);
+  nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
+}
+
+function playNext() {
+  if (currentSongs.length === 0) return;
+  let nextIndex = (currentIndex + 1) % currentSongs.length;
+  playSong(nextIndex);
+}
+
+function playPrev() {
+  if (currentSongs.length === 0) return;
+  let prevIndex = (currentIndex - 1 + currentSongs.length) % currentSongs.length;
+  playSong(prevIndex);
+}
+
+function savePlaybackState() {
+    if(currentIndex >= 0 && currentIndex < currentSongs.length) {
+        localStorage.setItem('lastSongIndex', currentIndex);
+        localStorage.setItem('lastSongTime', audioPlayer.currentTime);
+    }
+}
+
+function togglePlayPause() {
+    if (currentSongs.length === 0) return;
+    if(!audioPlayer.src) {
+        if(currentIndex === -1) {
+            const savedIndex = parseInt(localStorage.getItem('lastSongIndex'), 10);
+            const savedTime = parseFloat(localStorage.getItem('lastSongTime'));
+            if(!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < currentSongs.length) {
+                currentIndex = savedIndex;
+                playSong(currentIndex);
+                if (!isNaN(savedTime)) {
+                    audioPlayer.currentTime = savedTime;
+                }
+            } else {
+                playSong(0);
+            }
+        }
+        return;
+    }
+    if (audioPlayer.paused) {
+        audioPlayer.play();
+        updatePlayIcon(true);
+    } else {
+        audioPlayer.pause();
+        updatePlayIcon(false);
+    }
 }
 
 function populateAuthorDropdown(songs) {
@@ -209,7 +257,7 @@ const authorSelect = document.getElementById("authorSelect");
 
 authorSelect.addEventListener("change", (e) => {
     currentFilter = e.target.value;
-    currentSongs = getFilteredSongs();
+    currentSongs = getFilteredSongs();b
     displaySongs(currentSongs);
 });
 
@@ -220,13 +268,20 @@ document.getElementById("min-btn").addEventListener("click", () => {
 });
 
 document.getElementById("max-btn").addEventListener("click", () => {
-  window.electronAPI.maximize();
+  window.electronAPI.maximize();b
 });
 
 document.getElementById("close-btn").addEventListener("click", () => {
   window.electronAPI.close();
 });
 
+document.querySelectorAll('.controls .btn')[0].addEventListener('click', playPrev);
+document.querySelectorAll('.controls .btn')[1].addEventListener('click', togglePlayPause);
+document.querySelectorAll('.controls .btn')[2].addEventListener('click', playNext);
+audioPlayer.addEventListener('ended', playNext);
+audioPlayer.addEventListener('play', () => updatePlayIcon(true));
+audioPlayer.addEventListener('pause', () => updatePlayIcon(false));
+audioPlayer.addEventListener('pause', savePlaybackState);
 
 window.electronAPI.onSongsUpdated((fileName) => {
     loadAllSongs();
