@@ -167,35 +167,37 @@ async function loadAllSongs() {
 }
 
 async function playSong(index) {
-  const selectedSongPath = currentSongs[index].filePath;
-  console.log('selectedSongPath', selectedSongPath);
-  const base64 = await window.electronAPI.loadAudio(selectedSongPath);
-  const blob = new Blob(
-    [Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
-    { type: 'audio/mpeg' }
-  );
-  const url = URL.createObjectURL(blob);
-  
-  audioPlayer.src = url;
-  await audioPlayer.play();
-  updatePlayIcon(true);
-  nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
+    if (index < 0 || index >= currentSongs.length) return;
+    currentIndex = index;
+    const selectedSongPath = currentSongs[index].filePath;
+    console.log('selectedSongPath', selectedSongPath);
+    const base64 = await window.electronAPI.loadAudio(selectedSongPath);
+    const blob = new Blob(
+        [Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+    );
+    const url = URL.createObjectURL(blob);
+
+    audioPlayer.src = url;
+    await audioPlayer.play();
+    updatePlayIcon(true);
+    nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
 }
 
 function playNext() {
-  if (currentSongs.length === 0) return;
-  let nextIndex = (currentIndex + 1) % currentSongs.length;
-  playSong(nextIndex);
+    if (currentSongs.length === 0) return;
+    let nextIndex = (currentIndex + 1) % currentSongs.length;
+    playSong(nextIndex);
 }
 
 function playPrev() {
-  if (currentSongs.length === 0) return;
-  let prevIndex = (currentIndex - 1 + currentSongs.length) % currentSongs.length;
-  playSong(prevIndex);
+    if (currentSongs.length === 0) return;
+    let prevIndex = (currentIndex - 1 + currentSongs.length) % currentSongs.length;
+    playSong(prevIndex);
 }
 
 function savePlaybackState() {
-    if(currentIndex >= 0 && currentIndex < currentSongs.length) {
+    if (currentIndex >= 0 && currentIndex < currentSongs.length) {
         localStorage.setItem('lastSongIndex', currentIndex);
         localStorage.setItem('lastSongTime', audioPlayer.currentTime);
     }
@@ -203,11 +205,11 @@ function savePlaybackState() {
 
 function togglePlayPause() {
     if (currentSongs.length === 0) return;
-    if(!audioPlayer.src) {
-        if(currentIndex === -1) {
+    if (!audioPlayer.src) {
+        if (currentIndex === -1) {
             const savedIndex = parseInt(localStorage.getItem('lastSongIndex'), 10);
             const savedTime = parseFloat(localStorage.getItem('lastSongTime'));
-            if(!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < currentSongs.length) {
+            if (!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < currentSongs.length) {
                 currentIndex = savedIndex;
                 playSong(currentIndex);
                 if (!isNaN(savedTime)) {
@@ -257,22 +259,22 @@ const authorSelect = document.getElementById("authorSelect");
 
 authorSelect.addEventListener("change", (e) => {
     currentFilter = e.target.value;
-    currentSongs = getFilteredSongs();b
+    currentSongs = getFilteredSongs(); b
     displaySongs(currentSongs);
 });
 
 /* ------------- */
 
 document.getElementById("min-btn").addEventListener("click", () => {
-  window.electronAPI.minimize();
+    window.electronAPI.minimize();
 });
 
 document.getElementById("max-btn").addEventListener("click", () => {
-  window.electronAPI.maximize();b
+    window.electronAPI.maximize(); b
 });
 
 document.getElementById("close-btn").addEventListener("click", () => {
-  window.electronAPI.close();
+    window.electronAPI.close();
 });
 
 document.querySelectorAll('.controls .btn')[0].addEventListener('click', playPrev);
