@@ -278,6 +278,31 @@ async function deleteSong(song) {
     }
 }
 
+const progress = document.getElementById('progress');
+const progressContainer = document.getElementById('progressContainer');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
+
+audioPlayer.addEventListener('timeupdate', () => {
+    if(audioPlayer.duration) {
+        const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progress.style.width = `${percent}%`;
+        currentTimeEl.textContent = formatDuration(audioPlayer.currentTime);
+    }
+});
+
+audioPlayer.addEventListener('loadedmetadata', () => {
+    totalTimeEl.textContent = formatDuration(audioPlayer.duration);
+});
+
+progressContainer.addEventListener('click', (e) => {
+    const width = progressContainer.clientWidth;
+    const clickX = e.offsetX;
+    const duration = audioPlayer.duration; 
+    if (duration) {
+        audioPlayer.currentTime = (clickX /width) * duration;
+    }
+} )
 /* Author search */
 
 const authorSelect = document.getElementById("authorSelect");
