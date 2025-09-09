@@ -31,30 +31,85 @@ function createWindow() {
     mainWindow.setResizable(true);
 }
 
-const MUSIC_FOLDER = path.join(require("os").homedir(), "Documents", "music_folder");
+let MUSIC_FOLDER;
 
-if (!fs.existsSync(MUSIC_FOLDER)) { // check if folder MUSIC_FOLDER exist, if not then...
-    fs.mkdirSync(MUSIC_FOLDER, { recursive: true }); // create folder (MUSIC_FOLDER);
+async function checkForMp3Files(folderPath) {
+    try {
+        const files = await fs.promises.readdir(folderPath);
+        return files.filter(file => file.toLowerCase().endsWith('.mp3')).length > 0;
+    } catch (err) {
+        return false;
+    }
 }
 
-const watcher = chokidar.watch(MUSIC_FOLDER, {
-    persistent: true,
-    ignoreInitial: true,
-    ignored: /(^|{\/\\})\../,
-    depth: 0
-});
+async function ensureMusicFolder() {
+    const defaultFolder = path.join(require("os").homedir(), "Documents", "music_folder");
 
-watcher.on('add', filePath => {
-    if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
-});
+    // Check if default folder exists and has MP3 files
+    if (fs.existsSync(defaultFolder)) {
+        const hasMp3Files = await checkForMp3Files(defaultFolder);
+        if (hasMp3Files) {
+            MUSIC_FOLDER = defaultFolder;
+            return { folder: MUSIC_FOLDER, hasFiles: true };
+        }
+    }
 
-watcher.on('change', filePath => {
-    if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
-});
+    // If no default folder or no MP3 files, show dialog
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: "Select location for your music folder (or where to create one)",
+        properties: ["openDirectory", "createDirectory"]
+    });
+    
+    if (canceled || filePaths.length === 0) {
+        throw new Error("No folder selected, cannot continue.");
+    }
 
-watcher.on('unlink', filePath => {
-    if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
-});
+    const selectedPath = filePaths[0];
+
+    try {
+        const files = await fs.promises.readdir(selectedPath);
+        const mp3Files = files.filter(file => file.toLowerCase().endsWith(".mp3"));
+
+        if (mp3Files.length > 0) {
+            MUSIC_FOLDER = selectedPath;
+            return { folder: MUSIC_FOLDER, hasFiles: true };
+        } else {
+            MUSIC_FOLDER = path.join(selectedPath, "music_folder");
+            if (!fs.existsSync(MUSIC_FOLDER)) {
+                fs.mkdirSync(MUSIC_FOLDER, { recursive: true });
+            }
+            return { folder: MUSIC_FOLDER, hasFiles: false };
+        }
+    } catch (err) {
+        MUSIC_FOLDER = path.join(selectedPath, "music_folder");
+        if (!fs.existsSync(MUSIC_FOLDER)) {
+            fs.mkdirSync(MUSIC_FOLDER, { recursive: true });
+        }
+        return { folder: MUSIC_FOLDER, hasFiles: false };
+    }
+}
+
+function startWatcher() {
+    const watcher = chokidar.watch(MUSIC_FOLDER, {
+        persistent: true,
+        ignoreInitial: true,
+        ignored: /(^|{\/\\})\../,
+        depth: 0
+    });
+
+    watcher.on('add', filePath => {
+        if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
+    });
+
+    watcher.on('change', filePath => {
+        if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
+    });
+
+    watcher.on('unlink', filePath => {
+        if (mainWindow) mainWindow.webContents.send('songs-updated', path.basename(filePath));
+    });
+
+}
 
 async function safeParseFile(filePath, retries = 5, delay = 300) {
     for (let i = 0; i < retries; i++) {
@@ -151,46 +206,51 @@ ipcMain.handle('load-all-mp3-files', async () => {
 });
 
 ipcMain.on("window-control", (_, action) => {
-  if (!mainWindow) return;
-  switch (action) {
-    case "minimize":
-      mainWindow.minimize();
-      break;
-    case "maximize":
-      if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow.maximize();
-      }
-      break;
-    case "close":
-      mainWindow.close();
-      break;
-  }
+    if (!mainWindow) return;
+    switch (action) {
+        case "minimize":
+            mainWindow.minimize();
+            break;
+        case "maximize":
+            if (mainWindow.isMaximized()) {
+                mainWindow.unmaximize();
+            } else {
+                mainWindow.maximize();
+            }
+            break;
+        case "close":
+            mainWindow.close();
+            break;
+    }
 });
 
-app.whenReady().then(() => {
-    createWindow();
-
+app.whenReady().then(async () => {
+    try {
+        await ensureMusicFolder();
+        startWatcher();
+        createWindow();
+    } catch (err) {
+        app.quit();
+    }
     app.on('active', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 });
 
 ipcMain.handle('delete-mp3-file', async (event, fileName) => {
-  try {
-    const filePath = path.join(MUSIC_FOLDER, fileName);
+    try {
+        const filePath = path.join(MUSIC_FOLDER, fileName);
 
-    if (fs.existsSync(filePath)) {
-      await fs.promises.unlink(filePath);
-      console.log(`Deleted: ${fileName}`);
-      return true;
+        if (fs.existsSync(filePath)) {
+            await fs.promises.unlink(filePath);
+            console.log(`Deleted: ${fileName}`);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        console.error(`Error deleting ${fileName}:`, err);
+        return false;
     }
-    return false;
-  } catch (err) {
-    console.error(`Error deleting ${fileName}:`, err);
-    return false;
-  }
 });
 
 app.on('window-all-closed', () => {

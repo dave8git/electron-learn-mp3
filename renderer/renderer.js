@@ -175,7 +175,8 @@ async function playSong(index) {
     audioPlayer.src = url;
     await audioPlayer.play();
     updatePlayIcon(true);
-    nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
+    //nowPlayingDisplay.textContent = `Now Playing: "${currentSongs[index].title}"`;
+    updateNowPlayingDisplayAdvanced(currentSongs[index].title);
     updateActiveSong();
 }
 
@@ -276,6 +277,39 @@ async function deleteSong(song) {
             showStatus(`Failed to delete "${song.title}"`, 'error');
         }
     }
+}
+
+// function showDefaultDisplay() {
+//     const display = document.querySelector('.display');
+//     display.classList.remove('should-scroll');
+//     display.innerHTML = '🎵 Ready to play music...';
+// }
+
+function updateNowPlayingDisplayAdvanced(songTitle) {
+    const display = document.querySelector('.display');
+
+    const scrollingText = document.createElement('span');
+    scrollingText.className = 'scrolling-text';
+    scrollingText.textContent = `🎵 Now Playing: "${songTitle}"`;
+
+    display.innerHTML = '';
+    display.appendChild(scrollingText);
+
+    setTimeout(() => {
+        const displayWidth = display.offsetWidth;
+        const textWidth = scrollingText.offsetWidth;
+
+        if(textWidth > displayWidth) {
+            display.classList.add('should-scroll');
+
+            const baseDuration = 15;
+            const lengthMultiplier = Math.max(1, songTitle.length / 30);
+            const duration = baseDuration * lengthMultiplier;
+            scrollingText.style.animationDuration = `${duration}s`;
+        } else {
+            display.classList.remove('should-scroll');
+        }
+    }, 100);
 }
 
 const progress = document.getElementById('progress');

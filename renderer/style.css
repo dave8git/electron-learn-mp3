@@ -77,10 +77,40 @@ body {
   font-size: 11px;
   padding: 6px;
   border: 2px inset #333;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
   flex: 0 0 auto;
+  /* text-overflow: ellipsis; */
+  position: relative;
+  height: 20px;
+}
+
+.display .scrolling-text {
+  display: inline-block;
+  animation: scroll-left 15s linear infinite;
+  padding-left: 100%;
+}
+
+.display.should-scroll .scrolling-text {
+  animation: scroll-left 15s linear infinite;
+}
+
+.display:not(.should-scroll) .scrolling-text {
+  animation: none;
+  padding-left: 0;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.display:hover .scrolling-text {
+  animation-play-state: paused;
 }
 
 /* Buttons section */
